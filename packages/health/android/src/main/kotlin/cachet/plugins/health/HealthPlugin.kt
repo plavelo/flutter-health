@@ -1392,10 +1392,12 @@ class HealthPlugin(private var channel: MethodChannel? = null) :
                         return
                 }
 
+                // TODO: Add limit param
                 val type = call.argument<String>("dataTypeKey")!!
                 val startTime = call.argument<Long>("startTime")!!
                 val endTime = call.argument<Long>("endTime")!!
                 val includeManualEntry = call.argument<Boolean>("includeManualEntry")!!
+
                 // Look up data type and unit for the type key
                 val dataType = keyToHealthDataType(type)
                 val field = getField(type)
