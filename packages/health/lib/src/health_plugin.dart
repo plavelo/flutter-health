@@ -287,14 +287,14 @@ class Health {
     bool includeManualEntry,
   ) async {
     List<HealthDataPoint> heights = await _prepareQuery(
-        startTime, endTime, HealthDataType.HEIGHT, includeManualEntry);
+        startTime, endTime, HealthDataType.HEIGHT, includeManualEntry, null);
 
     if (heights.isEmpty) {
       return [];
     }
 
     List<HealthDataPoint> weights = await _prepareQuery(
-        startTime, endTime, HealthDataType.WEIGHT, includeManualEntry);
+        startTime, endTime, HealthDataType.WEIGHT, includeManualEntry, null);
 
     double h =
         (heights.last.value as NumericHealthValue).numericValue.toDouble();
@@ -763,12 +763,13 @@ class Health {
     required DateTime startTime,
     required DateTime endTime,
     bool includeManualEntry = true,
+    int? limit = null,
   }) async {
     List<HealthDataPoint> dataPoints = [];
 
     for (var type in types) {
       final result =
-          await _prepareQuery(startTime, endTime, type, includeManualEntry);
+          await _prepareQuery(startTime, endTime, type, includeManualEntry, limit);
       dataPoints.addAll(result);
     }
 
@@ -821,6 +822,7 @@ class Health {
     DateTime endTime,
     HealthDataType dataType,
     bool includeManualEntry,
+    int? limit,
   ) async {
     // Ask for device ID only once
     _deviceId ??= Platform.isAndroid
@@ -837,7 +839,7 @@ class Health {
     if (dataType == HealthDataType.BODY_MASS_INDEX && Platform.isAndroid) {
       return _computeAndroidBMI(startTime, endTime, includeManualEntry);
     }
-    return await _dataQuery(startTime, endTime, dataType, includeManualEntry);
+    return await _dataQuery(startTime, endTime, dataType, includeManualEntry, limit);
   }
 
   /// Prepares an interval query, i.e. checks if the types are available, etc.
@@ -887,12 +889,13 @@ class Health {
 
   /// Fetches data points from Android/iOS native code.
   Future<List<HealthDataPoint>> _dataQuery(DateTime startTime, DateTime endTime,
-      HealthDataType dataType, bool includeManualEntry) async {
+      HealthDataType dataType, bool includeManualEntry, int? limit) async {
     final args = <String, dynamic>{
       'dataTypeKey': dataType.name,
       'dataUnitKey': dataTypeToUnit[dataType]!.name,
       'startTime': startTime.millisecondsSinceEpoch,
       'endTime': endTime.millisecondsSinceEpoch,
+      'limit': limit,
       'includeManualEntry': includeManualEntry
     };
     final fetchedDataPoints = await _channel.invokeMethod('getData', args);
